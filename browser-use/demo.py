@@ -5,14 +5,11 @@ from typing import Optional, Type
 from pydantic import BaseModel
 # Import your agent and controller libraries
 from langchain_openai import ChatOpenAI
-from browser_use import Agent
-from browser_use.agent.views import ActionResult
+from browser_use import Agent, Agent
+from browser_use.agent.views import ActionResult, AgentState
 from browser_use.controller.service import Controller
 
 # Global variables to hold the agent's event loop and current user response future
-user_response_future = None
-waiting_for_input = False
-agent_event_loop = None
 
 class CustomController(Controller):
     def __init__(self):
@@ -20,51 +17,48 @@ class CustomController(Controller):
         self._register_custom_actions()
         
     def _register_custom_actions(self):
-        
         @self.registry.action("Ask user for more information")
         async def ask_user_for_info(message: str):
-            global user_response_future, waiting_for_input, agent_event_loop
-            agent_event_loop = asyncio.get_running_loop()
-            user_response_future = agent_event_loop.create_future()
-            
-            response = await user_response_future
+            response = input(f"Agent: {message} \n Your response: \n)")
             return ActionResult(extracted_content=response)
 
-# class AgentController:
-#     def __init__(self):
-#         self.running = False
-#         self.loop = None
+class AgentController:
+    def __init__(self):
+        self.running = False
+        self.loop = None
+        self.agent_state = AgentState()
         
-#     def initialize_agent(self, task: str):
-#         initial_actions = [
-# 	        {'open_tab': {'url': 'https://www.google.com'}},
-#         ]
-#         self.agent = Agent(
-#             task=task,
-#             llm=ChatOpenAI(model='gpt-4o-mini'),
-#             initial_actions=initial_actions,
-#             controller = CustomController(self)
-#         )
+    def initialize_agent(self, task: str):
+        initial_actions = [
+            {'open_tab': {'url': 'https://www.google.com'}},
+        ]
+        self.agent = Agent(
+            task=task,
+            llm=ChatOpenAI(model='gpt-4o-mini'),
+            initial_actions=initial_actions,
+            injected_agent_state=self.agent_state,
+            controller = CustomController(self)
+        )
 
-#     async def run_agent(self):
-#         self.running = True
-#         self.loop = asyncio.get_event_loop()
-#         history = await self.agent.run()
-#         self.running = False
+    async def run_agent(self):
+        self.running = True
+        self.loop = asyncio.get_event_loop()
+        history = await self.agent.run()
+        self.running = False
 
-#     def start(self):
-#         asyncio.run(self.run_agent())
+    def start(self):
+        asyncio.run(self.run_agent())
 
-#     def pause(self):
-#         self.agent.pause()
+    def pause(self):
+        self.agent.pause()
+        
+    def resume(self):
+        self.agent.resume()
 
-#     def resume(self):
-#         self.agent.resume()
-
-#     def stop(self):
-#         if self.agent:
-#             self.agent.stop()
-#         self.running = False
+    def stop(self):
+        if self.agent:
+            self.agent.stop()
+        self.running = False
 
 # agent_controller = AgentController()
 # agent_thread = None
