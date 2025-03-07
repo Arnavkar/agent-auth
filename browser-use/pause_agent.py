@@ -11,7 +11,6 @@ from langchain_openai import ChatOpenAI
 
 from browser_use import Agent
 
-
 class AgentController:
 	def __init__(self):
 		llm = ChatOpenAI(model='gpt-4o')
@@ -28,7 +27,9 @@ class AgentController:
 
 	def start(self):
 		"""Start the agent in a separate thread"""
-		asyncio.run(self.run_agent())
+		loop = asyncio.new_event_loop()
+		asyncio.set_event_loop(loop)
+		loop.run_until_complete(self.run_agent())
 
 	def pause(self):
 		"""Pause the agent"""
